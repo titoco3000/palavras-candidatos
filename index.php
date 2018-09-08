@@ -38,7 +38,9 @@ if(isset( $_GET["busca"]) &&  $_GET["busca"] != ""){
   $palavraChave =  $_GET["busca"];
   //print_r(localiza($palavraChave , $entrevista));
   foreach ( localiza($palavraChave , $entrevista) as $key => $value) {
-    echo retornaResumo($value , $entrevista)."<br><br>";
+  	$resumo = retornaResumo($value , $entrevista)."<br><br>";
+    $resumo_negrito = str_replace($palavraChave,'<b>'.$palavraChave.'</b>',$resumo);
+	echo $resumo_negrito;
   }
 
 
@@ -48,6 +50,64 @@ function retornaResumo($pos , $texto){
   $pos_ini = ($pos-200 < 0) ? 0 : $pos-200 ;
   $trecho = substr($texto ,  $pos_ini , 400 );
   return $trecho;
+}
+
+function tirarAcentos($string){
+    return preg_replace(array("/(á|à|ã|â|ä)/","/(Á|À|Ã|Â|Ä)/","/(é|è|ê|ë)/","/(É|È|Ê|Ë)/","/(í|ì|î|ï)/","/(Í|Ì|Î|Ï)/","/(ó|ò|õ|ô|ö)/","/(Ó|Ò|Õ|Ô|Ö)/","/(ú|ù|û|ü)/","/(Ú|Ù|Û|Ü)/","/(ñ)/","/(Ñ)/"),explode(" ","a A e E i I o O u U n N"),$string);
+}
+
+
+get_txt_from_globo();
+
+function get_txt_from_globo(){
+	// pega o html do site
+	$html = file_get_contents('https://oglobo.globo.com/brasil/leia-as-entrevistas-dos-presidenciaveis-ao-globo-22941226');
+	// instancia a classe DOMDocument
+	$doc = new DOMDocument('1.0', 'UTF-8');
+	// carrega o html no DOMDocument
+	$doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+	// pega todas as divs do html
+	$divs = $doc->getElementsByTagName('div');
+	foreach($divs as $div) {
+		// para cada div (foreach) verifica se ela tem as classes 'capituloPage corpo novo large-16 columns' .
+		// Estamos fazendo essa verificação porque vimos que cada entrevista esta dentro de uma div com essas classes
+		if ($div->getAttribute('class') == 'capituloPage corpo novo large-16 columns') {
+			// pega o conteudo da tag <h2> do html
+			$nome = $div->getElementsByTagName('h2');
+			// separa o primeiro do segundo nome em um array
+			$nome = explode(' ', $nome[0]->nodeValue);
+			// usa strtolower para deixar minusculo e a função tirar acentos, isso mesmo, para tirar os acentos
+			$pasta = strtolower(tirarAcentos($nome[0]).'-'.tirarAcentos($nome[1]));
+			// remove quebra de linha que existia na string $pasta
+			$pasta = preg_replace( "/\r|\n/", "", $pasta );
+			// cria o diretorio com o nome do político
+			if (!file_exists('./'.$pasta)) {
+			    mkdir('./'.$pasta, 0777, true);
+			}
+			$paragrafos = $div->getElementsByTagName('p');
+			$content = "";
+			foreach ($paragrafos as $paragrafo) {
+				$perguntas = $paragrafo->getElementsByTagName('strong');
+				// Queremos remover as perguntas? se sim é só descomentar abaixo
+				// foreach ($perguntas as $pergunta) {
+				// 	$pergunta->parentNode->removeChild($pergunta);
+				// }
+				// print_r($perguntas->parentNode);
+
+				$content .= $paragrafo->nodeValue . "\n\n";
+			}
+
+			$fp = fopen($pasta."/entrevista-globo.txt","wb");
+			fwrite($fp,$content);
+			fclose($fp);
+
+		}
+	    // Loop through the DIVs looking for one withan id of "content"
+	    // Then echo out its contents (pardon the pun)
+	    if ($div->getAttribute('id') === 'content') {
+	         echo $div->nodeValue;
+	    }
+	}
 }
 
 function localiza($chave='' , $texto='')
