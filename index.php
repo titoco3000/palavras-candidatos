@@ -134,43 +134,52 @@ function get_txt_from_globo(){
     			 	  // para cada palavra chave encontrada pega o resumo
     				  ?>
     				  	<h3>Candidato: <?php echo $nome; ?></h3>
-    					<h4>Entrevista O Globo</h4>
-    				  <?php
-    				  foreach ( $palavras_encontradas_entrevista as $key => $value) {
-    					  ?>
-    					  <div class="cada-resultado">
-    						  <?php
 
-        			 		$resumo = retornaResumo($value , $entrevista)."<br>";
-        			 	  	// a função str_replace esta substituindo a palavra chave por <b> palava chave</b>
-        			 		$resumo_negrito = str_replace($palavraChave,'<b>'.$palavraChave.'</b>',$resumo);
-        			 	  	echo $resumo_negrito;
-    						?>
-    					  </div>
-    					  <?php
-        			  }
+    				  <?php
+					  if (count($palavras_encontradas_entrevista)>0) {
+						  ?>
+						  <h4>Entrevista O Globo:</h4>
+						  <?php
+						  foreach ( $palavras_encontradas_entrevista as $key => $value) {
+	    					  ?>
+	    					  <div class="cada-resultado">
+	    						  <?php
+
+	        			 		$resumo = retornaResumo($value , $entrevista)."<br>";
+	        			 	  	// a função str_replace esta substituindo a palavra chave por <b> palava chave</b>
+	        			 		$resumo_negrito = str_replace($palavraChave,'<b>'.$palavraChave.'</b>',$resumo);
+	        			 	  	echo $resumo_negrito;
+	    						?>
+	    					  </div>
+	    					  <?php
+	        			  }
+					  }
 			 	  }
 
 				  ?>
-				  	<h4>Programa de governo:</h4>
 					<?php
 					$parser = new \Smalot\PdfParser\Parser();
 					$pdf = $parser->parseFile($dir.'/programa.pdf');
 					$plano_texto = $pdf->getText();
 					$palavras_encontradas_plano = localiza($palavraChave , $plano_texto);
 					// print_r($palavras_encontradas_plano);
-					foreach ( $palavras_encontradas_plano as $key => $value) {
-					 ?>
-					 <div class="cada-resultado">
+					if (count($palavras_encontradas_plano)>0) {
+						?>
+						<h4>Programa de governo:</h4>
+						<?php
+						foreach ( $palavras_encontradas_plano as $key => $value) {
+						 ?>
+						 <div class="cada-resultado">
+							 <?php
+						   $resumo = retornaResumo($value , $plano_texto)."<br>";
+						   // a função str_replace esta substituindo a palavra chave por <b> palava chave</b>
+						   $resumo_negrito = str_replace($palavraChave,'<b>'.$palavraChave.'</b>',$resumo);
+						   echo $resumo_negrito;
+						   ?>
+						 </div>
 						 <?php
-					   $resumo = retornaResumo($value , $plano_texto)."<br>";
-					   // a função str_replace esta substituindo a palavra chave por <b> palava chave</b>
-					   $resumo_negrito = str_replace($palavraChave,'<b>'.$palavraChave.'</b>',$resumo);
-					   echo $resumo_negrito;
-					   ?>
-					 </div>
-					 <?php
-				 }
+						}
+					}
 					?>
 			   </div>
 			   <?php
